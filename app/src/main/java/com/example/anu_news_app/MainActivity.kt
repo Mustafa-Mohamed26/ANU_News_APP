@@ -46,15 +46,18 @@ class MainActivity : AppCompatActivity() {
         val btnRegister = findViewById<com.google.android.material.button.MaterialButton>(R.id.btnRegister)
         val etName = findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.etName)
         val etEmail = findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.etEmail)
+        val etPhone = findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.etPhone)
         
         btnRegister.setOnClickListener {
             val name = etName.text.toString()
             val email = etEmail.text.toString()
+            val phone = etPhone.text.toString()
 
             if (name.isNotEmpty() && email.isNotEmpty()) {
                 val editor = sharedPreferences.edit()
                 editor.putString("userName", name)
                 editor.putString("userEmail", email)
+                editor.putString("userPhone", phone)
                 editor.putBoolean("isLoggedIn", true)
                 editor.apply()
 
