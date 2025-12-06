@@ -7,13 +7,13 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 
-data class NewsItem(
-    val title: String,
-    val author: String,
-    val time: String,
-    val imageResId: Int,
-    val description: String
-)
+/**
+ * Adapter for the RecyclerView in NewsActivity.
+ * This class binds the data (NewsItem) to the views defined in item_news.xml.
+ *
+ * @param newsList The list of news items to display.
+ * @param onItemClicked A function (lambda) that will be called when a user clicks on an item.
+ */
 
 class NewsAdapter(
     private var newsList: List<NewsItem>,
