@@ -2,6 +2,7 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="24dp"
@@ -85,12 +86,14 @@
 
     <!-- SCROLLABLE IMAGES ONLY -->
     <ScrollView
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="0dp"
         android:scrollbars="none"
         android:layout_marginTop="16dp"
         app:layout_constraintTop_toBottomOf="@id/headerTexts"
-        app:layout_constraintBottom_toBottomOf="parent">
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -102,23 +105,62 @@
                 android:layout_width="match_parent"
                 android:layout_height="200dp"
                 android:src="@drawable/general"
-                android:layout_marginBottom="16dp" />
+                android:layout_marginBottom="16dp"
+                android:scaleType="fitXY"
+                android:contentDescription="General News" />
 
             <!-- Image 2 -->
             <ImageView
                 android:layout_width="match_parent"
                 android:layout_height="200dp"
                 android:src="@drawable/business"
-                android:layout_marginBottom="16dp" />
+                android:layout_marginBottom="16dp"
+                android:scaleType="fitXY"
+                android:contentDescription="Business News" />
 
             <!-- Image 3 -->
             <ImageView
                 android:layout_width="match_parent"
                 android:layout_height="200dp"
                 android:src="@drawable/sports"
-                android:layout_marginBottom="16dp" />
+                android:layout_marginBottom="16dp"
+                android:scaleType="fitXY"
+                android:contentDescription="Sports News" />
 
-            <!-- Continue for other images... -->
+            <!-- Placeholder Image 4 -->
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                android:src="@drawable/technology"
+                android:layout_marginBottom="16dp"
+                android:scaleType="fitXY"
+                android:contentDescription="News Image 4" />
+
+            <!-- Placeholder Image 5 -->
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                android:src="@drawable/entertainment"
+                android:layout_marginBottom="16dp"
+                android:scaleType="fitXY"
+                android:contentDescription="News Image 5" />
+
+            <!-- Placeholder Image 6 -->
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                android:src="@drawable/health"
+                android:layout_marginBottom="16dp"
+                android:scaleType="fitXY"
+                android:contentDescription="News Image 6" />
+
+            <!-- Placeholder Image 7 -->
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                android:src="@drawable/science"
+                android:layout_marginBottom="16dp"
+                android:contentDescription="News Image 7" />
 
         </LinearLayout>
     </ScrollView>

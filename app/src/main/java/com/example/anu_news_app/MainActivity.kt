@@ -26,7 +26,19 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+            // Convert 24dp to pixels
+            val padding = android.util.TypedValue.applyDimension(
+                android.util.TypedValue.COMPLEX_UNIT_DIP, 
+                24f, 
+                resources.displayMetrics
+            ).toInt()
+
+            v.setPadding(
+                systemBars.left + padding, 
+                systemBars.top + padding, 
+                systemBars.right + padding, 
+                systemBars.bottom + padding
+            )
             insets
         }
 
