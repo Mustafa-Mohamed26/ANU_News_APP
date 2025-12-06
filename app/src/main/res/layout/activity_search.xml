@@ -21,7 +21,7 @@
         app:boxCornerRadiusTopEnd="14dp"
         app:boxCornerRadiusTopStart="14dp"
 
-        app:boxStrokeColor="#FFFFFFFF"
+        app:boxStrokeColor="@color/white_box_stroke"
         app:hintTextColor="#FFFFFFFF"
 
         app:endIconMode="custom"

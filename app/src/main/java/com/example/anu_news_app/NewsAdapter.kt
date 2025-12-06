@@ -11,10 +11,14 @@ data class NewsItem(
     val title: String,
     val author: String,
     val time: String,
-    val imageResId: Int
+    val imageResId: Int,
+    val description: String
 )
 
-class NewsAdapter(private var newsList: List<NewsItem>) : RecyclerView.Adapter<NewsAdapter.NewsViewHolder>() {
+class NewsAdapter(
+    private var newsList: List<NewsItem>,
+    private val onItemClicked: (NewsItem) -> Unit
+) : RecyclerView.Adapter<NewsAdapter.NewsViewHolder>() {
 
     class NewsViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val imgNews: ImageView = itemView.findViewById(R.id.imgNews)
@@ -34,6 +38,10 @@ class NewsAdapter(private var newsList: List<NewsItem>) : RecyclerView.Adapter<N
         holder.tvNewsAuthor.text = news.author
         holder.tvNewsTime.text = news.time
         holder.imgNews.setImageResource(news.imageResId)
+
+        holder.itemView.setOnClickListener {
+            onItemClicked(news)
+        }
     }
 
     override fun getItemCount(): Int = newsList.size

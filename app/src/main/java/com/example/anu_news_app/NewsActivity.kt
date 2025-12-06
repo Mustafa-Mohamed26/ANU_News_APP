@@ -51,7 +51,9 @@ class NewsActivity : AppCompatActivity() {
         // Setup RecyclerView
         val rvNews = findViewById<RecyclerView>(R.id.rvNews)
         rvNews.layoutManager = LinearLayoutManager(this)
-        adapter = NewsAdapter(generateDummyNews(categoryName))
+        adapter = NewsAdapter(generateDummyNews(categoryName)) { newsItem ->
+            showNewsDialog(newsItem)
+        }
         rvNews.adapter = adapter
 
         // Setup TabLayout (Sources)
@@ -103,6 +105,30 @@ class NewsActivity : AppCompatActivity() {
         }
     }
 
+    private fun showNewsDialog(newsItem: NewsItem) {
+        val dialog = android.app.Dialog(this)
+        dialog.setContentView(R.layout.dialog_news_details)
+        
+        // Make background transparent for CardView radius to show
+        dialog.window?.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(0))
+
+        val imgDialogNews = dialog.findViewById<android.widget.ImageView>(R.id.imgDialogNews)
+        val tvDialogTitle = dialog.findViewById<android.widget.TextView>(R.id.tvDialogTitle)
+        val tvDialogDescription = dialog.findViewById<android.widget.TextView>(R.id.tvDialogDescription)
+        val btnViewArticle = dialog.findViewById<android.widget.Button>(R.id.btnViewArticle)
+
+        imgDialogNews.setImageResource(newsItem.imageResId)
+        tvDialogTitle.text = newsItem.title
+        tvDialogDescription.text = newsItem.description
+
+        btnViewArticle.setOnClickListener {
+            dialog.dismiss()
+            // Placeholder for viewing full article
+        }
+
+        dialog.show()
+    }
+
     private fun generateDummyNews(context: String): List<NewsItem> {
         val list = mutableListOf<NewsItem>()
         val images = listOf(
@@ -122,7 +148,8 @@ class NewsActivity : AppCompatActivity() {
                     title = "News $i for $context source",
                     author = "By : Author $i",
                     time = "$i hours ago",
-                    imageResId = imageResId
+                    imageResId = imageResId,
+                    description = "A 40-year-old man has fallen approximately 200 feet to his death while canyoneering with three others at Zion National Park in Utah, authorities confirmed. \\n\\nThe incident occurred on Saturday when the... [+1529 chars]"
                 )
             )
         }
