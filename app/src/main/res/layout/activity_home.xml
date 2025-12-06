@@ -107,6 +107,7 @@
 
                 <!-- Image 1 -->
                 <ImageView
+                    android:id="@+id/imgGeneral"
                     android:layout_width="match_parent"
                     android:layout_height="200dp"
                     android:src="@drawable/general"
@@ -116,6 +117,7 @@
 
                 <!-- Image 2 -->
                 <ImageView
+                    android:id="@+id/imgBusiness"
                     android:layout_width="match_parent"
                     android:layout_height="200dp"
                     android:src="@drawable/business"
@@ -125,6 +127,7 @@
 
                 <!-- Image 3 -->
                 <ImageView
+                    android:id="@+id/imgSports"
                     android:layout_width="match_parent"
                     android:layout_height="200dp"
                     android:src="@drawable/sports"
@@ -134,6 +137,7 @@
 
                 <!-- Placeholder Image 4 -->
                 <ImageView
+                    android:id="@+id/imgTechnology"
                     android:layout_width="match_parent"
                     android:layout_height="200dp"
                     android:src="@drawable/technology"
@@ -143,6 +147,7 @@
 
                 <!-- Placeholder Image 5 -->
                 <ImageView
+                    android:id="@+id/imgEntertainment"
                     android:layout_width="match_parent"
                     android:layout_height="200dp"
                     android:src="@drawable/entertainment"
@@ -152,6 +157,7 @@
 
                 <!-- Placeholder Image 6 -->
                 <ImageView
+                    android:id="@+id/imgHealth"
                     android:layout_width="match_parent"
                     android:layout_height="200dp"
                     android:src="@drawable/health"
@@ -161,6 +167,7 @@
 
                 <!-- Placeholder Image 7 -->
                 <ImageView
+                    android:id="@+id/imgScience"
                     android:layout_width="match_parent"
                     android:layout_height="200dp"
                     android:src="@drawable/science"

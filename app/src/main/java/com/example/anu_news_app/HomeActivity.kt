@@ -81,5 +81,22 @@ class HomeActivity : AppCompatActivity() {
         findViewById<android.view.View>(R.id.navHome).setOnClickListener {
             drawerLayout.closeDrawer(androidx.core.view.GravityCompat.START)
         }
+
+        // 5. Category Click Listeners
+        setupCategory(R.id.imgGeneral, "General")
+        setupCategory(R.id.imgBusiness, "Business")
+        setupCategory(R.id.imgSports, "Sports")
+        setupCategory(R.id.imgTechnology, "Technology")
+        setupCategory(R.id.imgEntertainment, "Entertainment")
+        setupCategory(R.id.imgHealth, "Health")
+        setupCategory(R.id.imgScience, "Science")
+    }
+
+    private fun setupCategory(viewId: Int, categoryName: String) {
+        findViewById<android.view.View>(viewId).setOnClickListener {
+            val intent = android.content.Intent(this, NewsActivity::class.java)
+            intent.putExtra("CATEGORY_NAME", categoryName)
+            startActivity(intent)
+        }
     }
 }
