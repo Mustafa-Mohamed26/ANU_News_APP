@@ -16,77 +16,70 @@ import com.google.android.material.tabs.TabLayout
 class NewsActivity : AppCompatActivity() {
 
     private lateinit var adapter: NewsAdapter
+    private lateinit var progressBar: android.widget.ProgressBar
+    private lateinit var tvError: android.widget.TextView
+    private lateinit var tvNoNews: android.widget.TextView
+    private lateinit var rvNews: RecyclerView
+    private lateinit var tabLayout: TabLayout
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_news)
-        
-        // Use drawerLayout as the visual root for edge-to-edge
+
         val drawerLayout = findViewById<androidx.drawerlayout.widget.DrawerLayout>(R.id.drawerLayout)
         val mainContent = findViewById<android.view.View>(R.id.main)
 
-        // Reset padding for DrawerLayout to avoid double padding/margins
         ViewCompat.setOnApplyWindowInsetsListener(drawerLayout) { v, insets ->
-           v.setPadding(0, 0, 0, 0)
-           insets
+            v.setPadding(0, 0, 0, 0)
+            insets
         }
 
-        // Apply system bars insets to main content
         ViewCompat.setOnApplyWindowInsetsListener(mainContent) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
 
-        // Get the category name passed from HomeActivity
-        val categoryName = intent.getStringExtra("CATEGORY_NAME") ?: "General"
+        val categoryName = intent.getStringExtra("CATEGORY_NAME") ?: "general"
         findViewById<android.widget.TextView>(R.id.tvCategoryTitle).text = categoryName
 
-        // 1. Drawer Toggle
         findViewById<android.view.View>(R.id.imgMenu).setOnClickListener {
-             if (!drawerLayout.isDrawerOpen(androidx.core.view.GravityCompat.START)) {
+            if (!drawerLayout.isDrawerOpen(androidx.core.view.GravityCompat.START)) {
                 drawerLayout.openDrawer(androidx.core.view.GravityCompat.START)
             }
         }
 
-        // Search Button
         findViewById<android.view.View>(R.id.imgSearch).setOnClickListener {
             startActivity(android.content.Intent(this, SearchActivity::class.java))
         }
 
-        // Setup RecyclerView (The list of news)
-        val rvNews = findViewById<RecyclerView>(R.id.rvNews)
-        rvNews.layoutManager = LinearLayoutManager(this) // Linear layout = vertical list
-        
-        // Initialize Adapter with dummy data and a click listener callback
-        adapter = NewsAdapter(generateDummyNews(categoryName)) { newsItem ->
-            showNewsDialog(newsItem)
+        rvNews = findViewById(R.id.rvNews)
+        progressBar = findViewById(R.id.progressBar)
+        tvError = findViewById(R.id.tvError)
+        tvNoNews = findViewById(R.id.tvNoNews)
+        tabLayout = findViewById(R.id.tabLayout)
+
+        rvNews.layoutManager = LinearLayoutManager(this)
+
+        adapter = NewsAdapter(listOf()) { article ->
+            showNewsDialog(article)
         }
         rvNews.adapter = adapter
 
-        // Setup TabLayout (The horizontal bar for Sources)
-        val tabLayout = findViewById<TabLayout>(R.id.tabLayout)
-        // Add 10 dummy sources
-        for (i in 1..10) {
-            tabLayout.addTab(tabLayout.newTab().setText("$categoryName $i"))
-        }
-
-        // Listen for tab selections to filter news
         tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
             override fun onTabSelected(tab: TabLayout.Tab?) {
-                // Shuffle/Change data based on source
-                val sourceName = tab?.text.toString()
-                // Retrieve new data and update the adapter
-                adapter.updateData(generateDummyNews("$sourceName"))
+                val source = tab?.tag as? com.example.anu_news_app.model.Source
+                source?.id?.let { getNewsBySourceId(it) }
             }
             override fun onTabUnselected(tab: TabLayout.Tab?) {}
             override fun onTabReselected(tab: TabLayout.Tab?) {}
         })
 
-        // --- Drawer Logic (Same as HomeActivity) ---
+        // Fetch sources based on category id (lowercase)
+        getSources(categoryName.lowercase())
 
-        // 2. Populate User Data
+        // --- Drawer Logic ---
         val sharedPreferences = getSharedPreferences("UserPrefs", MODE_PRIVATE)
         val userName = sharedPreferences.getString("userName", "User")
         val userEmail = sharedPreferences.getString("userEmail", "email@example.com")
@@ -96,32 +89,129 @@ class NewsActivity : AppCompatActivity() {
         findViewById<android.widget.TextView>(R.id.tvDrawerEmail).text = userEmail
         findViewById<android.widget.TextView>(R.id.tvDrawerPhone).text = userPhone
 
-        // 3. Logout Logic
         findViewById<android.view.View>(R.id.btnLogout).setOnClickListener {
             sharedPreferences.edit().clear().apply()
-
             val intent = android.content.Intent(this, MainActivity::class.java)
-            // Clear back stack
             intent.flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK or android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK
             startActivity(intent)
             finish()
         }
 
-        // 4. "Go To Home" Logic
         findViewById<android.view.View>(R.id.navHome).setOnClickListener {
-            // Since we are in NewsActivity, going to Home means just closing this one
             finish()
         }
     }
 
-    /**
-     * Displays a custom Dialog with news details.
-     */
-    private fun showNewsDialog(newsItem: NewsItem) {
+    private fun getSources(category: String) {
+        showLoading()
+        com.example.anu_news_app.api.ApiManager.getSources(
+            category,
+            onSuccess = { sourceResponse ->
+                runOnUiThread {
+                    // Sources loaded, we don't hide loading yet, we wait for news
+                    val sources = sourceResponse.sources
+                    if (sources.isNullOrEmpty()) {
+                        hideLoading()
+                        showError("No sources found")
+                    } else {
+                         // We don't hide loading here because we immediately fetch news for the first source
+                        setupTabs(sources)
+                    }
+                }
+            },
+            onError = { error ->
+                runOnUiThread {
+                    hideLoading()
+                    showError(error.localizedMessage ?: "Something went wrong")
+                }
+            }
+        )
+    }
+
+    private fun setupTabs(sources: List<com.example.anu_news_app.model.Source>) {
+        tabLayout.removeAllTabs()
+        sources.forEach { source ->
+            val tab = tabLayout.newTab()
+            tab.text = source.name
+            tab.tag = source
+            tabLayout.addTab(tab)
+        }
+        // Select first tab automatically if available
+        if (tabLayout.tabCount > 0) {
+            val firstTab = tabLayout.getTabAt(0)
+            firstTab?.select()
+            // Manually trigger news fetch for first tab
+            val firstSource = firstTab?.tag as? com.example.anu_news_app.model.Source
+            firstSource?.id?.let { getNewsBySourceId(it) }
+        } else {
+             hideLoading()
+        }
+    }
+
+    private fun getNewsBySourceId(sourceId: String) {
+        showLoading()
+        // Clear current list while loading
+        adapter.updateData(listOf())
+
+        com.example.anu_news_app.api.ApiManager.getNewsBySourceId(
+            sourceId,
+            onSuccess = { newsResponse ->
+                runOnUiThread {
+                    hideLoading()
+                    val articles = newsResponse.articles
+                    if (articles.isNullOrEmpty()) {
+                         showEmpty()
+                    } else {
+                         showData()
+                         adapter.updateData(articles)
+                    }
+                }
+            },
+            onError = { error ->
+                runOnUiThread {
+                    hideLoading()
+                    showError(error.localizedMessage ?: "Something went wrong")
+                }
+            }
+        )
+    }
+
+    private fun showLoading() {
+        progressBar.visibility = android.view.View.VISIBLE
+        tvError.visibility = android.view.View.GONE
+        tvNoNews.visibility = android.view.View.GONE
+        rvNews.visibility = android.view.View.GONE
+    }
+
+    private fun hideLoading() {
+        progressBar.visibility = android.view.View.GONE
+    }
+
+    private fun showError(message: String) {
+        progressBar.visibility = android.view.View.GONE
+        rvNews.visibility = android.view.View.GONE
+        tvNoNews.visibility = android.view.View.GONE
+        tvError.visibility = android.view.View.VISIBLE
+        tvError.text = message
+    }
+
+    private fun showEmpty() {
+        progressBar.visibility = android.view.View.GONE
+        rvNews.visibility = android.view.View.GONE
+        tvError.visibility = android.view.View.GONE
+        tvNoNews.visibility = android.view.View.VISIBLE
+    }
+
+    private fun showData() {
+        progressBar.visibility = android.view.View.GONE
+        tvError.visibility = android.view.View.GONE
+        tvNoNews.visibility = android.view.View.GONE
+        rvNews.visibility = android.view.View.VISIBLE
+    }
+
+    private fun showNewsDialog(article: com.example.anu_news_app.model.Article) {
         val dialog = android.app.Dialog(this)
         dialog.setContentView(R.layout.dialog_news_details)
-        
-        // Make background transparent for CardView radius to show correctly
         dialog.window?.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(0))
 
         val imgDialogNews = dialog.findViewById<android.widget.ImageView>(R.id.imgDialogNews)
@@ -129,47 +219,24 @@ class NewsActivity : AppCompatActivity() {
         val tvDialogDescription = dialog.findViewById<android.widget.TextView>(R.id.tvDialogDescription)
         val btnViewArticle = dialog.findViewById<android.widget.Button>(R.id.btnViewArticle)
 
-        // Populate dialog views with data from the clicked item
-        imgDialogNews.setImageResource(newsItem.imageResId)
-        tvDialogTitle.text = newsItem.title
-        tvDialogDescription.text = newsItem.description
+        // Load image using Glide
+        com.bumptech.glide.Glide.with(this)
+            .load(article.urlToImage)
+            .placeholder(R.drawable.ic_news_placeholder)
+            .into(imgDialogNews)
+
+        tvDialogTitle.text = article.title
+        tvDialogDescription.text = article.description ?: article.content ?: "No content available"
 
         btnViewArticle.setOnClickListener {
+            // dialog.dismiss() // Don't dismiss, or dismiss before launch? 
+            // Better to dismiss dialog then launch.
             dialog.dismiss()
-            // In a real app, this would open a WebView or Browser
+            val intent = android.content.Intent(this, WebViewActivity::class.java)
+            intent.putExtra("EXTRA_URL", article.url)
+            startActivity(intent)
         }
 
         dialog.show()
-    }
-
-    /**
-     * Helper to create dummy news data for testing.
-     */
-    private fun generateDummyNews(context: String): List<NewsItem> {
-        val list = mutableListOf<NewsItem>()
-        val images = listOf(
-            R.drawable.general,
-            R.drawable.business,
-            R.drawable.sports,
-            R.drawable.technology,
-            R.drawable.entertainment,
-            R.drawable.health,
-            R.drawable.science
-        )
-
-        for (i in 1..10) {
-            val imageResId = images[(i - 1) % images.size]
-            list.add(
-                NewsItem(
-                    title = "News $i for $context source",
-                    author = "By : Author $i",
-                    time = "$i hours ago",
-                    imageResId = imageResId,
-                    description = "A 40-year-old man has fallen approximately 200 feet to his death while canyoneering with three others at Zion National Park in Utah, authorities confirmed. \\n\\nThe incident occurred on Saturday when the... [+1529 chars]"
-                )
-            )
-        }
-        
-        return list
     }
 }

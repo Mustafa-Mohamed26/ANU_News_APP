@@ -16,8 +16,8 @@ import androidx.recyclerview.widget.RecyclerView
  */
 
 class NewsAdapter(
-    private var newsList: List<NewsItem>,
-    private val onItemClicked: (NewsItem) -> Unit
+    private var articles: List<com.example.anu_news_app.model.Article>,
+    private val onItemClicked: (com.example.anu_news_app.model.Article) -> Unit
 ) : RecyclerView.Adapter<NewsAdapter.NewsViewHolder>() {
 
     class NewsViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -33,21 +33,26 @@ class NewsAdapter(
     }
 
     override fun onBindViewHolder(holder: NewsViewHolder, position: Int) {
-        val news = newsList[position]
-        holder.tvNewsTitle.text = news.title
-        holder.tvNewsAuthor.text = news.author
-        holder.tvNewsTime.text = news.time
-        holder.imgNews.setImageResource(news.imageResId)
+        val article = articles[position]
+        holder.tvNewsTitle.text = article.title
+        holder.tvNewsAuthor.text = article.author ?: "Unknown Author"
+        holder.tvNewsTime.text = article.publishedAt ?: ""
+        
+        com.bumptech.glide.Glide.with(holder.itemView.context)
+            .load(article.urlToImage)
+            .placeholder(R.drawable.ic_news_placeholder)
+            .error(R.drawable.ic_news_placeholder)
+            .into(holder.imgNews)
 
         holder.itemView.setOnClickListener {
-            onItemClicked(news)
+            onItemClicked(article)
         }
     }
 
-    override fun getItemCount(): Int = newsList.size
+    override fun getItemCount(): Int = articles.size
 
-    fun updateData(newList: List<NewsItem>) {
-        newsList = newList
+    fun updateData(newList: List<com.example.anu_news_app.model.Article>) {
+        articles = newList
         notifyDataSetChanged()
     }
 }
