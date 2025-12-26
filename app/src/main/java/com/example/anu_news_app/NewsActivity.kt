@@ -11,7 +11,13 @@ import com.google.android.material.tabs.TabLayout
 
 /**
  * NewsActivity: Displays a list of news articles for a selected category.
- * It uses a RecyclerView for the list and TabLayout for filtering by source.
+ *
+ * This Activity is responsible for:
+ * 1. Receiving the category name from [HomeActivity].
+ * 2. Fetching the list of news sources (tabs) using [ApiManager].
+ * 3. Fetching news articles for the selected source.
+ * 4. Displaying articles in a [RecyclerView].
+ * 5. Handling user interactions (clicking an article).
  */
 class NewsActivity : AppCompatActivity() {
 
@@ -27,6 +33,7 @@ class NewsActivity : AppCompatActivity() {
         enableEdgeToEdge()
         setContentView(R.layout.activity_news)
 
+        // --- Setup Window Insets (Padding) ---
         val drawerLayout = findViewById<androidx.drawerlayout.widget.DrawerLayout>(R.id.drawerLayout)
         val mainContent = findViewById<android.view.View>(R.id.main)
 
@@ -41,9 +48,12 @@ class NewsActivity : AppCompatActivity() {
             insets
         }
 
+        // --- Retrieve Data from Intent ---
+        // We get the string passed from HomeActivity. If null, default to "general".
         val categoryName = intent.getStringExtra("CATEGORY_NAME") ?: "general"
         findViewById<android.widget.TextView>(R.id.tvCategoryTitle).text = categoryName
 
+        // --- Setup Drawer Toggle ---
         findViewById<android.view.View>(R.id.imgMenu).setOnClickListener {
             if (!drawerLayout.isDrawerOpen(androidx.core.view.GravityCompat.START)) {
                 drawerLayout.openDrawer(androidx.core.view.GravityCompat.START)
@@ -54,32 +64,41 @@ class NewsActivity : AppCompatActivity() {
             startActivity(android.content.Intent(this, SearchActivity::class.java))
         }
 
+        // --- Setup Views ---
         rvNews = findViewById(R.id.rvNews)
         progressBar = findViewById(R.id.progressBar)
         tvError = findViewById(R.id.tvError)
         tvNoNews = findViewById(R.id.tvNoNews)
         tabLayout = findViewById(R.id.tabLayout)
 
+        // Setup RecyclerView
         rvNews.layoutManager = LinearLayoutManager(this)
 
+        // Initialize Adapter with an empty list initially.
+        // The lambda { article -> ... } is the onItemClicked callback.
         adapter = NewsAdapter(listOf()) { article ->
             showNewsDialog(article)
         }
         rvNews.adapter = adapter
 
+        // --- Setup TabLayout Listeners ---
+        // This handles what happens when a user clicks on a Source tab (e.g., "BBC").
         tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
             override fun onTabSelected(tab: TabLayout.Tab?) {
+                // Determine which source was selected using the 'tag' property
                 val source = tab?.tag as? com.example.anu_news_app.model.Source
+                // If source has an ID, fetch its news
                 source?.id?.let { getNewsBySourceId(it) }
             }
             override fun onTabUnselected(tab: TabLayout.Tab?) {}
             override fun onTabReselected(tab: TabLayout.Tab?) {}
         })
 
-        // Fetch sources based on category id (lowercase)
+        // Fetch sources based on category id (lowercase) - Starts the data loading process
         getSources(categoryName.lowercase())
 
-        // --- Drawer Logic ---
+        // --- Drawer User Info & Logout (Duplicated logic from HomeActivity) ---
+        // In a production app, we might move this to a BaseActivity to avoid duplication.
         val sharedPreferences = getSharedPreferences("UserPrefs", MODE_PRIVATE)
         val userName = sharedPreferences.getString("userName", "User")
         val userEmail = sharedPreferences.getString("userEmail", "email@example.com")
@@ -92,21 +111,28 @@ class NewsActivity : AppCompatActivity() {
         findViewById<android.view.View>(R.id.btnLogout).setOnClickListener {
             sharedPreferences.edit().clear().apply()
             val intent = android.content.Intent(this, MainActivity::class.java)
+            // Clear back stack so user can't go back to NewsActivity after logging out
             intent.flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK or android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK
             startActivity(intent)
             finish()
         }
 
         findViewById<android.view.View>(R.id.navHome).setOnClickListener {
-            finish()
+            finish() // Just close this activity to go back to HomeActivity
         }
     }
 
+    /**
+     * Fetches the list of Sources (publishers) for the current category.
+     */
     private fun getSources(category: String) {
         showLoading()
+        // API Call
         com.example.anu_news_app.api.ApiManager.getSources(
             category,
             onSuccess = { sourceResponse ->
+                // API calls happen on a background thread.
+                // We MUST switch to the UI thread (runOnUiThread) to update Views (TabLayout, etc.).
                 runOnUiThread {
                     // Sources loaded, we don't hide loading yet, we wait for news
                     val sources = sourceResponse.sources
@@ -128,12 +154,15 @@ class NewsActivity : AppCompatActivity() {
         )
     }
 
+    /**
+     * Creating tabs dynamically based on the list of sources retrieved.
+     */
     private fun setupTabs(sources: List<com.example.anu_news_app.model.Source>) {
         tabLayout.removeAllTabs()
         sources.forEach { source ->
             val tab = tabLayout.newTab()
             tab.text = source.name
-            tab.tag = source
+            tab.tag = source // Associate the Source object with the tab
             tabLayout.addTab(tab)
         }
         // Select first tab automatically if available
@@ -148,6 +177,9 @@ class NewsActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * Fetches news articles for a specific source ID.
+     */
     private fun getNewsBySourceId(sourceId: String) {
         showLoading()
         // Clear current list while loading
@@ -163,7 +195,7 @@ class NewsActivity : AppCompatActivity() {
                          showEmpty()
                     } else {
                          showData()
-                         adapter.updateData(articles)
+                         adapter.updateData(articles) // Update adapter with new data
                     }
                 }
             },
@@ -176,6 +208,8 @@ class NewsActivity : AppCompatActivity() {
         )
     }
 
+    // Helper functions to manage UI State (Loading, Error, Empty, Content)
+    
     private fun showLoading() {
         progressBar.visibility = android.view.View.VISIBLE
         tvError.visibility = android.view.View.GONE
@@ -209,9 +243,13 @@ class NewsActivity : AppCompatActivity() {
         rvNews.visibility = android.view.View.VISIBLE
     }
 
+    /**
+     * Displays a customized Dialog when an item is clicked.
+     */
     private fun showNewsDialog(article: com.example.anu_news_app.model.Article) {
         val dialog = android.app.Dialog(this)
         dialog.setContentView(R.layout.dialog_news_details)
+        // Make dialog background transparent so our rounded corners show nicely
         dialog.window?.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(0))
 
         val imgDialogNews = dialog.findViewById<android.widget.ImageView>(R.id.imgDialogNews)
@@ -226,12 +264,12 @@ class NewsActivity : AppCompatActivity() {
             .into(imgDialogNews)
 
         tvDialogTitle.text = article.title
+        // Show description, or content, or fallback text if both null
         tvDialogDescription.text = article.description ?: article.content ?: "No content available"
 
         btnViewArticle.setOnClickListener {
-            // dialog.dismiss() // Don't dismiss, or dismiss before launch? 
-            // Better to dismiss dialog then launch.
             dialog.dismiss()
+            // Launch WebViewActivity to read full article
             val intent = android.content.Intent(this, WebViewActivity::class.java)
             intent.putExtra("EXTRA_URL", article.url)
             startActivity(intent)

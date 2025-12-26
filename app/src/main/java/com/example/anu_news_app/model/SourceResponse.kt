@@ -2,6 +2,12 @@ package com.example.anu_news_app.model
 
 import com.google.gson.annotations.SerializedName
 
+/**
+ * Represents the JSON response for a list of news sources.
+ *
+ * @param status Response status ("ok" or "error").
+ * @param sources List of [Source] objects.
+ */
 data class SourceResponse(
     @SerializedName("status") val status: String? = null,
     @SerializedName("sources") val sources: List<Source>? = null,
@@ -9,6 +15,10 @@ data class SourceResponse(
     @SerializedName("message") val message: String? = null
 )
 
+/**
+ * Represents a news publisher/source (e.g., "BBC News").
+ * This class is reused in both [SourceResponse] and [Article].
+ */
 data class Source(
     @SerializedName("id") val id: String? = null,
     @SerializedName("name") val name: String? = null,

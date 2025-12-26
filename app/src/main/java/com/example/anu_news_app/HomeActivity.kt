@@ -105,15 +105,22 @@ class HomeActivity : AppCompatActivity() {
     }
 
     /**
-     * Helper function to reduce repeated code.
+     * Helper function to setup category click listeners.
      * Takes an ID (for the ImageView) and a String (Category Name).
+     *
+     * @param viewId The resource ID of the View (Image/Card) to click.
+     * @param categoryName The name of the category to send to NewsActivity.
      */
     private fun setupCategory(viewId: Int, categoryName: String) {
         findViewById<android.view.View>(viewId).setOnClickListener {
+            // Create an Intent to switch from HomeActivity to NewsActivity
             val intent = android.content.Intent(this, NewsActivity::class.java)
-            // Passing Data: We put the category name into the Intent extras.
-            // NewsActivity will retrieve this using key "CATEGORY_NAME".
+            
+            // Passing Data: We put the category name into the Intent 'extras'.
+            // NewsActivity will retrieve this using the key "CATEGORY_NAME".
             intent.putExtra("CATEGORY_NAME", categoryName)
+            
+            // Start the new activity
             startActivity(intent)
         }
     }
